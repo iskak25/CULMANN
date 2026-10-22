@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
+import { useArchitectureMotion } from './useArchitectureMotion';
 import type { Content } from '@/lib/content';
 import { plain } from '@/lib/rich';
 import { parseVideo } from '@/lib/video';
+import SignalSection from './SignalSection';
 import s from './ArchitectureHome.module.css';
 
 const topics = ['Проектирование', 'Обследование', 'Тендер', 'Вакансия', 'Другое'];
@@ -13,6 +15,8 @@ const number = (i: number) => String(i + 1).padStart(2, '0');
 export default function ArchitectureHome({ content: c }: { content: Content }) {
   const [menu, setMenu] = useState(false);
   const [slide, setSlide] = useState(0);
+  const root = useRef<HTMLDivElement>(null);
+  useArchitectureMotion(root, slide);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
@@ -34,7 +38,7 @@ export default function ArchitectureHome({ content: c }: { content: Content }) {
     } catch (err) { setError(err instanceof Error ? err.message : 'Ошибка отправки'); }
     finally { setSending(false); }
   }
-  return <div className={s.site}>
+  return <div className={s.site} ref={root}>
     <header className={s.header}>
       <a className={s.brand} href="#home" aria-label="CULMANN — на главную">CULMANN<span>ENGINEERING & STRUCTURES</span></a>
       <nav className={s.desktopNav} aria-label="Главная навигация">{nav.map(([href, label]) => <a key={href} href={href}>{label}</a>)}</nav>
@@ -46,12 +50,14 @@ export default function ArchitectureHome({ content: c }: { content: Content }) {
       <div id="home" className={s.hero}>
         <img key={current.image} className={s.heroImage} src={current.image} alt="Архитектурный образ современного здания" fetchPriority="high" />
         <div className={s.heroShade} />
+        <div className={s.heroBeam} aria-hidden="true" />
         <div className={s.heroTop}><span>БИШКЕК, КЫРГЫЗСТАН</span><span>АРХИТЕКТУРА ТОЧНЫХ РЕШЕНИЙ</span></div>
-        <div className={s.heroCopy} aria-live="polite"><p className={s.eyebrow}>{current.label}</p><h1>{current.title}</h1><div className={s.heroBottom}><p>{current.text}</p><a className={s.circleLink} href="#work" aria-label="Смотреть проекты">↗</a></div></div>
+        <div className={s.heroCopy} aria-live="polite"><p className={s.eyebrow}>{current.label}</p><h1 key={current.title} aria-label={current.title}>{current.title.split(/\s+/).map((word, i) => <Fragment key={i}><span className={s.wordMask} aria-hidden="true"><span style={{ animationDelay: `${100 + i * 65}ms` }}>{word}</span></span>{' '}</Fragment>)}</h1><div className={s.heroBottom}><p>{current.text}</p><a className={s.circleLink} href="#work" aria-label="Смотреть проекты">↗</a></div></div>
         <div className={s.heroFoot}><a href="#company">ЛИСТАЙТЕ ВНИЗ <span>↓</span></a>{slides.length > 1 ? <div className={s.dots}>{slides.map((_, i) => <button key={i} onClick={() => setSlide(i)} aria-label={`Слайд ${i + 1}`} aria-pressed={slide === i} className={slide === i ? s.selectedDot : ''} />)}</div> : <span>КОНСТРУКЦИИ. ПРОСТРАНСТВО. БУДУЩЕЕ.</span>}<span>{number(slide)} / {String(slides.length).padStart(2, '0')}</span></div>
       </div>
       <div className={s.content}>
         <div className={s.gateway}>{[['#company', 'О компании', 'Инженерия, которой доверяют'], ['#work', 'Проекты', 'От идеи до реализации'], ['#expertise', 'Услуги', 'Точность в каждой детали']].map(([href, title, text], i) => <a href={href} key={href}><span className={s.gatewayNumber}>{number(i)}</span><div><h2>{title}</h2><p>{text}</p></div><span className={s.arrow}>↗</span></a>)}</div>
+        <SignalSection content={c} />
         <section id="company" className={s.about}>
           <div className={s.sectionLabel}><span>01 / О КОМПАНИИ</span><span>CULMANN</span></div>
           <div className={s.mission}><div className={s.missionImage}><img src="/architecture.jpg" alt="Архитектурная визуализация фасада" loading="lazy" /><span>ФОРМА НАЧИНАЕТСЯ С РАСЧЁТА</span></div><div className={s.missionText}><p className={s.eyebrow}>НАША МИССИЯ</p><h2>{plain(c.about.statement)}</h2><p>{c.why.text}</p><a className={s.textLink} href="#expertise">Наши компетенции <span>↗</span></a></div></div>
